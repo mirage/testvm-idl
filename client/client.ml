@@ -57,7 +57,6 @@ let block_stop_junk_writer vbdid =
   Printf.printf "%b\n" result;
   Lwt.return ()
 
-
 let copts_section="COMMON OPTIONS"
 
 let domid_arg =
@@ -149,6 +148,33 @@ let debug_cmd =
           Lwt.return ()), domid)) $ domid_arg)),
   Term.info "debug" ~doc ~man
 
+let shutdown_cmd =
+  let man =
+    [ `S "DESCRIPTION";
+      `P "Cause the test VM to shutdown";
+    ] in
+  let doc = "Shutdown the test VM" in
+  Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.shutdown ()), domid)) $ domid_arg)),
+  Term.info "shutdown" ~doc ~man
+
+let reboot_cmd =
+  let man =
+    [ `S "DESCRIPTION";
+      `P "Cause the test VM to reboot";
+    ] in
+  let doc = "Reboot the test VM" in
+  Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.reboot ()), domid)) $ domid_arg)),
+  Term.info "reboot" ~doc ~man
+
+let crash_cmd =
+  let man =
+    [ `S "DESCRIPTION";
+      `P "Cause the test VM to crash";
+    ] in
+  let doc = "Crash the test VM" in
+  Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.crash ()), domid)) $ domid_arg)),
+  Term.info "crash" ~doc ~man
+
 let default = 
   let doc = "a test VM control system" in 
   Term.(ret (pure (`Help (`Pager, None)))),
@@ -164,6 +190,9 @@ let _ =
                               block_read_sector_cmd;
 			      block_list_cmd;
                               debug_cmd;
+			      shutdown_cmd;
+			      reboot_cmd;
+			      crash_cmd;
                              ] with `Ok x -> x | _ -> exit 1) in
 
   let thread = 
