@@ -1,30 +1,60 @@
 
 let (>>=) = Lwt.bind
 
-module type VCHAN =
-  sig
-    type t
-    val read_into : t -> string -> int -> int -> int Lwt.t
-    val write_from : t -> string -> int -> int -> int Lwt.t
-  end
-
-module IO = functor (V : VCHAN) -> 
+module IO = functor (F : V1_LWT.FLOW) -> 
 struct
   type 'a t = 'a Lwt.t
     
   let (>>=) = Lwt.bind
   let (>>) m n = m >>= fun _ -> n
   let return = Lwt.return
+  let fail = Lwt.fail
 
-  type ic = V.t
-  type oc = V.t
+  type channel = {
+    flow: F.flow;
+    mutable segment: Cstruct.t option;
+  }
+
+  let rec read_into channel buf off len =
+    if len = 0
+    then return ()
+    else
+      let read_more () =
+        F.read channel.flow >>= function
+        | `Ok segment ->
+          channel.segment <- Some segment;
+          read_into channel buf off len
+        | `Eof -> fail End_of_file
+        | `Error _ -> fail (Failure "Unhandled error reading from FLOW") in
+      match channel.segment with
+      | None -> read_more ()
+      | Some segment ->
+        if Cstruct.len segment = 0
+        then read_more ()
+        else begin
+          let available = min (Cstruct.len segment) len in
+          Cstruct.blit_to_string segment 0 buf off available;
+          channel.segment <- Some (Cstruct.shift segment available);
+          read_into channel buf (off + available) (len - available)
+        end
+
+  let write_from channel buf off len =
+    let segment = Cstruct.create len in
+    Cstruct.blit_from_string buf off segment 0 len;
+    F.write channel.flow segment >>= function
+    | `Ok () -> return ()
+    | `Eof -> fail End_of_file
+    | `Error _ -> fail (Failure "Unhandled error writing to FLOW")
+
+  type ic = channel
+  type oc = channel
     
   let iter fn x = Lwt_list.iter_s fn x
     
   let read_line ic =
     let rec inner s =
       let buf = String.create 1 in
-      V.read_into ic buf 0 1 >>= fun _ ->
+      read_into ic buf 0 1 >>= fun _ ->
       if buf.[0] = '\n' 
       then begin 
         if s.[String.length s - 1] = '\r'
@@ -35,27 +65,27 @@ struct
 
   let read ic n =
     let buf = String.create n in
-    let rec inner left =
-      if left = 0 then return buf else begin
-	V.read_into ic buf (n-left) left >>= fun x ->
-	Printf.fprintf stderr "read %d '%s'\n%!" x (String.sub buf (n-left) x);
-	inner (left - x)
-      end
-    in inner n
+    read_into ic buf 0 n >>= fun () ->
+    return buf
 
   let read_exactly ic len =
     read ic len >>= fun x -> Lwt.return (Some x)
 
   let write oc s =
-    lwt _ = V.write_from oc s 0 (String.length s) in Lwt.return ()
+    lwt _ = write_from oc s 0 (String.length s) in Lwt.return ()
 
   let flush _ = Lwt.return ()
 end
 
-module Make ( V : VCHAN ) = struct
+module Make ( V : V1_LWT.FLOW ) = struct
   module IO = IO(V)
   module Request = Cohttp.Request.Make(IO)
   module Response = Cohttp.Response.Make(IO)
+
+  let openflow flow = { IO.flow; segment = None }
+
+  let close channel =
+    Lwt.return () (* unimplemented in VCHAN and FLOW *)
 
   let rpc string_of_call response_of_string vch call =
     let uri = Uri.of_string "vchan://" in
@@ -114,12 +144,7 @@ module Make ( V : VCHAN ) = struct
           Printf.printf "Read request headers: content_length=%s" content_length;
 	  let content_length = int_of_string content_length in
 	  let request_txt = String.make content_length '\000' in
-	  lwt _ = 
-            let rec inner n =
-              lwt m = V.read_into vch request_txt n (content_length - n) in
-              if m = (content_length - n) then Lwt.return () else inner (n+m)
-            in inner 0
-          in
+          IO.read_into vch request_txt 0 content_length >>= fun () ->
 	  let rpc_call = call_of_string request_txt in
 	  Printf.printf "%s" (Rpc.string_of_call rpc_call);
 	  lwt rpc_response = process ctx rpc_call in
