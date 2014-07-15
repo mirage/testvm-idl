@@ -36,8 +36,8 @@ let vif_list () =
 let vif_get_ipv4 vifid =
   Printf.printf "Getting ip...\n%!";
   lwt ipv4 = Lwt.catch (fun () -> Client.Vif.get_ipv4 vifid) (fun exn ->
-  Printf.printf "Got exception: %s\n" (Printexc.to_string exn);
-  Lwt.return "") in
+      Printf.printf "Got exception: %s\n" (Printexc.to_string exn);
+      Lwt.return "") in
   Printf.printf "Got result: '%s'\n%!" ipv4;
   lwt () = Lwt_unix.sleep 1.0 in
   Lwt.return ()
@@ -123,7 +123,7 @@ let vif_inject_packet_cmd =
   let man =
     [ `S "DESCRIPTION";
       `P "Causes the test VM to write the contents of the specified file out as a network packet on the specified VIF.";
-    `P "The value VIF IDs can be obtained by the vif-list subcommand"] in
+      `P "The value VIF IDs can be obtained by the vif-list subcommand"] in
   let doc = "Output the file on the specified VIF" in
   Term.(ret(pure (fun vifid filename domid -> `Ok ((fun () -> vif_inject_packet vifid filename), domid)) $ vifid_arg $ filename_arg 1 $ domid_arg)),
   Term.info "vif-inject-packet" ~doc ~man
@@ -200,7 +200,7 @@ let default =
   let doc = "a test VM control system" in 
   Term.(ret (pure (`Help (`Pager, None)))),
   Term.info "testcli" ~version:"0.0.1" ~doc
-     
+
 
 let _ =
   let (fn, domid) = (match Term.eval_choice ~catch:true default 
@@ -209,11 +209,11 @@ let _ =
                               vif_inject_packet_cmd;
                               block_write_sector_cmd;
                               block_read_sector_cmd;
-			      block_list_cmd;
+                              block_list_cmd;
                               debug_cmd;
-			      shutdown_cmd;
-			      reboot_cmd;
-			      crash_cmd;
+                              shutdown_cmd;
+                              reboot_cmd;
+                              crash_cmd;
                              ] with `Ok x -> x | _ -> exit 1) in
 
   let thread = 
