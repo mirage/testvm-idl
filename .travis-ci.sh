@@ -1,4 +1,4 @@
-OPAM_DEPENDS="lwt cstruct ounit stringext uri sexplib cmdliner shared-memory-ring xen-evtchn xen-gnt xenstore xenstore_transport mirage vchan io-page"
+OPAM_DEPENDS="lwt cstruct ounit stringext uri sexplib cmdliner shared-memory-ring xen-evtchn xen-gnt xenstore xenstore_transport mirage vchan io-page cohttp rpc"
 
 
 case "$OCAML_VERSION,$OPAM_VERSION" in
