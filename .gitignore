@@ -1,0 +1,5 @@
+_build
+*.native
+setup.bin
+setup.log
+setup.data
