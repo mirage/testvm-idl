@@ -2,8 +2,8 @@ OASISFormat: 0.2
 Name:        testvm_idl
 Version:     0.1
 Synopsis:    Test VM interface
-Authors:     Jon Ludlam
-License:     LGPL-2.1 with OCaml linking exception
+Authors:     Jon Ludlam, David Scott
+License:     ISC
 Plugins:     META (0.2)
 BuildTools:  ocamlbuild
 
