@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: b61ab969cd16d76c51d2a7b9ac88fcc7)
-version = "0.2"
+# DO NOT EDIT (digest: e005bb02f1de9676c1b7bf9d107d3c8b)
+version = "0.3"
 description = "Test VM interface"
 requires = "lwt vchan cohttp mirage rpclib mirage-types.lwt"
 archive(byte) = "testvmlib.cma"
