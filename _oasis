@@ -12,7 +12,7 @@ Library testvmlib
   Path:               lib
   Findlibname:        testvmlib
   Modules:            Test_interface, Vchan_http, ExtentlistSet
-  BuildDepends:       lwt, vchan, cohttp, mirage, rpclib
+  BuildDepends:       lwt, vchan, cohttp, mirage, rpclib, mirage-types.lwt
 
 Executable client
   CompiledObject: best
