@@ -1,3 +1,19 @@
+(*
+ * Copyright (C) Citrix Systems Inc.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *)
+
 open Cmdliner
 
 module Xs = Xs_client_lwt.Client(Xs_transport_lwt_unix_client)
@@ -20,8 +36,8 @@ let vif_list () =
 let vif_get_ipv4 vifid =
   Printf.printf "Getting ip...\n%!";
   lwt ipv4 = Lwt.catch (fun () -> Client.Vif.get_ipv4 vifid) (fun exn ->
-  Printf.printf "Got exception: %s\n" (Printexc.to_string exn);
-  Lwt.return "") in
+      Printf.printf "Got exception: %s\n" (Printexc.to_string exn);
+      Lwt.return "") in
   Printf.printf "Got result: '%s'\n%!" ipv4;
   lwt () = Lwt_unix.sleep 1.0 in
   Lwt.return ()
@@ -107,7 +123,7 @@ let vif_inject_packet_cmd =
   let man =
     [ `S "DESCRIPTION";
       `P "Causes the test VM to write the contents of the specified file out as a network packet on the specified VIF.";
-    `P "The value VIF IDs can be obtained by the vif-list subcommand"] in
+      `P "The value VIF IDs can be obtained by the vif-list subcommand"] in
   let doc = "Output the file on the specified VIF" in
   Term.(ret(pure (fun vifid filename domid -> `Ok ((fun () -> vif_inject_packet vifid filename), domid)) $ vifid_arg $ filename_arg 1 $ domid_arg)),
   Term.info "vif-inject-packet" ~doc ~man
@@ -184,7 +200,7 @@ let default =
   let doc = "a test VM control system" in 
   Term.(ret (pure (`Help (`Pager, None)))),
   Term.info "testcli" ~version:"0.0.1" ~doc
-     
+
 
 let _ =
   let (fn, domid) = (match Term.eval_choice ~catch:true default 
@@ -193,11 +209,11 @@ let _ =
                               vif_inject_packet_cmd;
                               block_write_sector_cmd;
                               block_read_sector_cmd;
-			      block_list_cmd;
+                              block_list_cmd;
                               debug_cmd;
-			      shutdown_cmd;
-			      reboot_cmd;
-			      crash_cmd;
+                              shutdown_cmd;
+                              reboot_cmd;
+                              crash_cmd;
                              ] with `Ok x -> x | _ -> exit 1) in
 
   let thread = 

@@ -1,10 +1,25 @@
+(*
+ * Copyright (C) Citrix Systems Inc.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *)
 
 let (>>=) = Lwt.bind
 
 module IO = functor (F : V1_LWT.FLOW) -> 
 struct
   type 'a t = 'a Lwt.t
-    
+
   let (>>=) = Lwt.bind
   let (>>) m n = m >>= fun _ -> n
   let return = Lwt.return
@@ -48,9 +63,9 @@ struct
 
   type ic = channel
   type oc = channel
-    
+
   let iter fn x = Lwt_list.iter_s fn x
-    
+
   let read_line ic =
     let rec inner s =
       let buf = String.create 1 in
@@ -105,11 +120,11 @@ module Make ( V : V1_LWT.FLOW ) = struct
       begin match Cohttp.Response.status t with
         | `OK ->
           lwt body = 
-          lwt chunk = Response.read_body_chunk t vch in
-          match chunk with 
-          | Cohttp.Transfer.Chunk body
-          | Cohttp.Transfer.Final_chunk body -> Lwt.return body
-          | _ -> Lwt.return "" in
+            lwt chunk = Response.read_body_chunk t vch in
+            match chunk with 
+            | Cohttp.Transfer.Chunk body
+            | Cohttp.Transfer.Final_chunk body -> Lwt.return body
+            | _ -> Lwt.return "" in
           Lwt.return (response_of_string body)
         | bad -> Lwt.fail (Failure (Printf.sprintf "Unexpected HTTP response code: %s" (Cohttp.Code.string_of_status bad)))
       end 
@@ -124,7 +139,7 @@ module Make ( V : V1_LWT.FLOW ) = struct
     let rpc call =
       let Some v = !vch in
       lwt result = rpc Jsonrpc.string_of_call Jsonrpc.response_of_string v call in
-    Lwt.return result
+      Lwt.return result
   end
 
   let http_handler call_of_string string_of_response process vch ctx =
@@ -135,37 +150,37 @@ module Make ( V : V1_LWT.FLOW ) = struct
       Printf.printf "Invalid: %s" s; Lwt.return ()
     | `Ok req ->
       begin match Cohttp.Request.meth req, Uri.path (Cohttp.Request.uri req) with
-      | `POST, _ ->
-        let headers = Cohttp.Request.headers req in
-        begin match Cohttp.Header.get headers "content-length" with
-        | None ->
-	  Printf.printf "Failed to read content-length"; Lwt.return ()
-        | Some content_length ->
-          Printf.printf "Read request headers: content_length=%s" content_length;
-	  let content_length = int_of_string content_length in
-	  let request_txt = String.make content_length '\000' in
-          IO.read_into vch request_txt 0 content_length >>= fun () ->
-	  let rpc_call = call_of_string request_txt in
-	  Printf.printf "%s" (Rpc.string_of_call rpc_call);
-	  lwt rpc_response = process ctx rpc_call in
-	  Printf.printf "   %s" (Rpc.string_of_response rpc_response);
-	  let response_txt = string_of_response rpc_response in
-	  let content_length = String.length response_txt in
-	  let headers = Cohttp.Header.of_list [
-	    "user-agent", "vchan";
-	    "content-length", string_of_int content_length;
-	  ] in
-	  let response = Cohttp.Response.make ~version:`HTTP_1_1 ~status:`OK ~headers ~encoding:(Cohttp.Transfer.Fixed content_length) () in
-	  Response.write (fun t vch -> Response.write_body t vch response_txt) response vch
-        end
-      | _, _ ->
-        let content_length = 0 in
-        let headers = Cohttp.Header.of_list [
-	  "user-agent", "vchan";
-  	  "content-length", string_of_int content_length;
-        ] in
-        let response = Cohttp.Response.make ~version:`HTTP_1_1 ~status:`Not_found ~headers ~encoding:(Cohttp.Transfer.Fixed content_length) () in
-        Response.write (fun t vch -> Lwt.return ()) response vch
+        | `POST, _ ->
+          let headers = Cohttp.Request.headers req in
+          begin match Cohttp.Header.get headers "content-length" with
+            | None ->
+              Printf.printf "Failed to read content-length"; Lwt.return ()
+            | Some content_length ->
+              Printf.printf "Read request headers: content_length=%s" content_length;
+              let content_length = int_of_string content_length in
+              let request_txt = String.make content_length '\000' in
+              IO.read_into vch request_txt 0 content_length >>= fun () ->
+              let rpc_call = call_of_string request_txt in
+              Printf.printf "%s" (Rpc.string_of_call rpc_call);
+              lwt rpc_response = process ctx rpc_call in
+              Printf.printf "   %s" (Rpc.string_of_response rpc_response);
+              let response_txt = string_of_response rpc_response in
+              let content_length = String.length response_txt in
+              let headers = Cohttp.Header.of_list [
+                  "user-agent", "vchan";
+                  "content-length", string_of_int content_length;
+                ] in
+              let response = Cohttp.Response.make ~version:`HTTP_1_1 ~status:`OK ~headers ~encoding:(Cohttp.Transfer.Fixed content_length) () in
+              Response.write (fun t vch -> Response.write_body t vch response_txt) response vch
+          end
+        | _, _ ->
+          let content_length = 0 in
+          let headers = Cohttp.Header.of_list [
+              "user-agent", "vchan";
+              "content-length", string_of_int content_length;
+            ] in
+          let response = Cohttp.Response.make ~version:`HTTP_1_1 ~status:`Not_found ~headers ~encoding:(Cohttp.Transfer.Fixed content_length) () in
+          Response.write (fun t vch -> Lwt.return ()) response vch
       end
 
 end
