@@ -221,7 +221,8 @@ let crash_cmd =
 let setopt_cmd =
   let man =
     [ `S "DESCRIPTION";
-      `P "Set an option to alter the VM's behaviour"; ]
+      `P "Set an option to alter the VM's behaviour. Valid options are:"; ]
+    @ List.map (fun (x,_) -> `P x) valid_options
   in
   let doc = "Set an option to alter the VM's behaviour" in
   Term.(ret (pure (fun domid arg v -> `Ok ((fun () -> setopt arg v), domid)) $ domid_arg $ option_arg $ value_arg)),
