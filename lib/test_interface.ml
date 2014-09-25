@@ -42,3 +42,9 @@ module Vif = struct
   external get_ipv4 : vifid -> string = ""
   external inject_packet : vifid -> string -> unit = ""
 end
+
+module Xs = struct
+  external start_bulk_stress : unit -> unit = ""
+  external stop_bulk_stress : unit -> unit = ""
+end
+
