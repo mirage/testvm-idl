@@ -14,6 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+type option = 
+  | IgnorePowerStateRequests of bool
+  | AckAndIgnorePowerStateRequests of bool
+
+external setopt : option -> unit = ""
+
 external shutdown : unit -> unit = ""
 external reboot : unit -> unit = ""
 external crash : unit -> unit = ""
@@ -46,5 +52,8 @@ end
 module Xs = struct
   external start_bulk_stress : unit -> unit = ""
   external stop_bulk_stress : unit -> unit = ""
+
+  external fill_to_quota : unit -> unit = ""
+  external kill : unit -> unit = ""
 end
 

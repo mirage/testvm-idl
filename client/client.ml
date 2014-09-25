@@ -78,6 +78,21 @@ let block_stop_junk_writer vbdid =
   Printf.printf "%b\n" result;
   Lwt.return ()
 
+let valid_options = [
+  "ignore_power_state_requests", (fun s -> Test_interface.IgnorePowerStateRequests (bool_of_string s));
+  "ack_and_ignore_power_state_requests", (fun s -> Test_interface.AckAndIgnorePowerStateRequests (bool_of_string s));
+]
+
+let setopt arg v =
+  if List.mem_assoc arg valid_options then
+    let opt = v |> List.assoc arg valid_options in
+    Client.setopt opt
+  else begin
+    Printf.printf "Unrecognised option. Valid options are:\n";
+    List.iter (fun (x,_) -> Printf.printf "    %s\n" x) valid_options;
+    Lwt.return ()
+  end
+
 let copts_section="COMMON OPTIONS"
 
 let domid_arg =
@@ -101,6 +116,13 @@ let sector_arg =
   let doc = "Specify the sector offset" in
   Arg.(value & opt int64 0L & info ["s"; "sector"] ~doc ~docv:"SECTOR")
 
+let option_arg = 
+  let doc = "The option to set" in
+  Arg.(required & pos 1 (some string) None & info [] ~doc ~docv:"OPTION")
+
+let value_arg =
+  let doc = "The value to set" in
+  Arg.(required & pos 2 (some string) None & info [] ~doc ~docv:"VALUE")
 
 let vif_list_cmd =
   let man = 
@@ -196,6 +218,15 @@ let crash_cmd =
   Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.crash ()), domid)) $ domid_arg)),
   Term.info "crash" ~doc ~man
 
+let setopt_cmd =
+  let man =
+    [ `S "DESCRIPTION";
+      `P "Set an option to alter the VM's behaviour"; ]
+  in
+  let doc = "Set an option to alter the VM's behaviour" in
+  Term.(ret (pure (fun domid arg v -> `Ok ((fun () -> setopt arg v), domid)) $ domid_arg $ option_arg $ value_arg)),
+  Term.info "setopt" ~doc ~man
+      
 let xs_start_bulk_stress_cmd = 
   let man = 
     [ `S "DESCRIPTION";
@@ -213,6 +244,24 @@ let xs_stop_bulk_stress_cmd =
   let doc = "Stop the xenstore bulk stress thread" in
   Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.Xs.stop_bulk_stress ()), domid)) $ domid_arg)),
   Term.info "xs-stop-bulk-stress" ~doc ~man
+
+let xs_fill_to_quota_cmd =
+  let man = 
+    [ `S "DESCRIPTION";
+      `P "Cause the test VM to fill up xenstore until it hits the quota";
+    ] in
+  let doc = "Cause the test VM to fill up xenstore until it hits the quota" in
+  Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.Xs.fill_to_quota ()), domid)) $ domid_arg)),
+  Term.info "xs-fill-quota" ~doc ~man
+
+let xs_kill_cmd =
+  let man = 
+    [ `S "DESCRIPTION";
+      `P "Cause the test VM to write an oversize XenStore packet that breaks the XenStore connection";
+    ] in
+  let doc = "Cause the test VM to break its XenStore connection" in
+  Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.Xs.kill ()), domid)) $ domid_arg)),
+  Term.info "xs-kill" ~doc ~man
 
 let default = 
   let doc = "a test VM control system" in 
@@ -234,6 +283,9 @@ let _ =
                               crash_cmd;
 			      xs_start_bulk_stress_cmd;
 			      xs_stop_bulk_stress_cmd;
+                              xs_kill_cmd;
+                              xs_fill_to_quota_cmd;
+                              setopt_cmd;
                              ] with `Ok x -> x | _ -> exit 1) in
 
   let thread = 
