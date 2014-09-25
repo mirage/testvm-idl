@@ -196,6 +196,24 @@ let crash_cmd =
   Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.crash ()), domid)) $ domid_arg)),
   Term.info "crash" ~doc ~man
 
+let xs_start_bulk_stress_cmd = 
+  let man = 
+    [ `S "DESCRIPTION";
+      `P "Cause the test VM to start writing lots of data to xenstore";
+    ] in
+  let doc = "Start the xenstore bulk stress thread" in
+  Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.Xs.start_bulk_stress ()), domid)) $ domid_arg)),
+  Term.info "xs-start-bulk-stress" ~doc ~man
+
+let xs_stop_bulk_stress_cmd = 
+  let man = 
+    [ `S "DESCRIPTION";
+      `P "Cause the test VM to stop writing lots of data to xenstore";
+    ] in
+  let doc = "Stop the xenstore bulk stress thread" in
+  Term.(ret (pure (fun domid -> `Ok ((fun () -> Client.Xs.stop_bulk_stress ()), domid)) $ domid_arg)),
+  Term.info "xs-stop-bulk-stress" ~doc ~man
+
 let default = 
   let doc = "a test VM control system" in 
   Term.(ret (pure (`Help (`Pager, None)))),
@@ -214,6 +232,8 @@ let _ =
                               shutdown_cmd;
                               reboot_cmd;
                               crash_cmd;
+			      xs_start_bulk_stress_cmd;
+			      xs_stop_bulk_stress_cmd;
                              ] with `Ok x -> x | _ -> exit 1) in
 
   let thread = 
