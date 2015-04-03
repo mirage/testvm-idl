@@ -22,6 +22,9 @@ doc: setup.data setup.bin
 install: setup.bin
 	@./setup.bin -install
 
+uninstall:
+	@ocamlfind remove $(NAME) || true
+
 reinstall: setup.bin
 	@ocamlfind remove $(NAME) || true
 	@./setup.bin -reinstall
