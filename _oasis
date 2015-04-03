@@ -1,6 +1,6 @@
 OASISFormat: 0.2
 Name:        testvm_idl
-Version:     0.3
+Version:     0.4
 Synopsis:    Test VM interface
 Authors:     Jon Ludlam, David Scott
 License:     ISC
