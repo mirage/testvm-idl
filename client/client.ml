@@ -17,16 +17,14 @@
 open Cmdliner
 
 module Xs = Xs_client_lwt.Client(Xs_transport_lwt_unix_client)
-module V = struct
-  include Vchan.Make(Unix_activations)(Xs)
-  type 'a io = 'a Lwt.t
-  type buffer = Cstruct.t
-  type flow = t
-end
+module V = Vchan.Endpoint.Make(Events_lwt_unix)(Memory_lwt_unix)(Vchan.Xenstore.Make(Xs))
 module Vchan_http = Vchan_http.Make(V)
 module RpcM = Vchan_http.RpcM
 module Client = Test_interface.ClientM(RpcM)
 
+let port = match Vchan.Port.of_string "testvm" with
+| `Ok x -> x
+| `Error x -> failwith x
 
 let vif_list () =
   lwt vifs = Client.Vif.list () in
@@ -165,7 +163,7 @@ let debug_cmd =
       `Ok ((fun () -> 
           let Some vch = !(RpcM.vch) in
           Vchan_http.close vch;
-          lwt client = V.client ~evtchn_h:(Eventchn.init ()) ~domid ~xs_path:(Printf.sprintf "/local/domain/%d/data/vchan" domid) in
+          lwt client = V.client ~domid ~port () in
           Lwt.return ()), domid)) $ domid_arg)),
   Term.info "debug" ~doc ~man
 
@@ -217,8 +215,7 @@ let _ =
                              ] with `Ok x -> x | _ -> exit 1) in
 
   let thread = 
-    let evtchn_h = Eventchn.init () in
-    lwt flow = V.client ~evtchn_h ~domid ~xs_path:(Printf.sprintf "/local/domain/%d/data/vchan" domid) in
+    lwt flow = V.client ~domid ~port () in
     RpcM.vch := Some (Vchan_http.openflow flow);
     fn ()
   in

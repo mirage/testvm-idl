@@ -10,7 +10,7 @@ depends: [
   "ocamlfind"
   "cohttp" {>= "0.15.2"}
   "rpc"
-  "vchan"
+  "vchan" {>= "2.0.0"}
   "mirage"
   "mirage-types"
   "lwt"
