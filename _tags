@@ -1,8 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: 0f32615443f094a4143815ea96ebca81)
+# DO NOT EDIT (digest: 5d617c092d25bf92ae4926fe03e758f8)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
+true: annot, bin_annot
 <**/.svn>: -traverse
 <**/.svn>: not_hygienic
 ".bzr": -traverse
@@ -15,12 +16,12 @@
 "_darcs": not_hygienic
 # Library testvmlib
 "lib/testvmlib.cmxs": use_testvmlib
-<lib/*.ml{,i}>: pkg_cohttp
-<lib/*.ml{,i}>: pkg_lwt
-<lib/*.ml{,i}>: pkg_mirage
-<lib/*.ml{,i}>: pkg_mirage-types.lwt
-<lib/*.ml{,i}>: pkg_rpclib
-<lib/*.ml{,i}>: pkg_vchan
+<lib/*.ml{,i,y}>: pkg_cohttp
+<lib/*.ml{,i,y}>: pkg_lwt
+<lib/*.ml{,i,y}>: pkg_mirage
+<lib/*.ml{,i,y}>: pkg_mirage-types.lwt
+<lib/*.ml{,i,y}>: pkg_rpclib
+<lib/*.ml{,i,y}>: pkg_vchan
 # Executable client
 <client/client.{native,byte}>: pkg_cmdliner
 <client/client.{native,byte}>: pkg_cohttp
@@ -31,6 +32,7 @@
 <client/client.{native,byte}>: pkg_mirage-types.lwt
 <client/client.{native,byte}>: pkg_rpclib
 <client/client.{native,byte}>: pkg_vchan
+<client/client.{native,byte}>: pkg_vchan.lwt
 <client/client.{native,byte}>: pkg_xen-evtchn
 <client/client.{native,byte}>: pkg_xen-evtchn.unix
 <client/client.{native,byte}>: pkg_xen-evtchn.unix.activations
@@ -41,25 +43,26 @@
 <client/client.{native,byte}>: pkg_xenstore_transport
 <client/client.{native,byte}>: pkg_xenstore_transport.lwt
 <client/client.{native,byte}>: use_testvmlib
-<client/*.ml{,i}>: pkg_cmdliner
-<client/*.ml{,i}>: pkg_cohttp
-<client/*.ml{,i}>: pkg_io-page
-<client/*.ml{,i}>: pkg_io-page.unix
-<client/*.ml{,i}>: pkg_lwt
-<client/*.ml{,i}>: pkg_mirage
-<client/*.ml{,i}>: pkg_mirage-types.lwt
-<client/*.ml{,i}>: pkg_rpclib
-<client/*.ml{,i}>: pkg_vchan
-<client/*.ml{,i}>: pkg_xen-evtchn
-<client/*.ml{,i}>: pkg_xen-evtchn.unix
-<client/*.ml{,i}>: pkg_xen-evtchn.unix.activations
-<client/*.ml{,i}>: pkg_xen-gnt
-<client/*.ml{,i}>: pkg_xen-gnt.unix
-<client/*.ml{,i}>: pkg_xenstore
-<client/*.ml{,i}>: pkg_xenstore.client
-<client/*.ml{,i}>: pkg_xenstore_transport
-<client/*.ml{,i}>: pkg_xenstore_transport.lwt
-<client/*.ml{,i}>: use_testvmlib
+<client/*.ml{,i,y}>: pkg_cmdliner
+<client/*.ml{,i,y}>: pkg_cohttp
+<client/*.ml{,i,y}>: pkg_io-page
+<client/*.ml{,i,y}>: pkg_io-page.unix
+<client/*.ml{,i,y}>: pkg_lwt
+<client/*.ml{,i,y}>: pkg_mirage
+<client/*.ml{,i,y}>: pkg_mirage-types.lwt
+<client/*.ml{,i,y}>: pkg_rpclib
+<client/*.ml{,i,y}>: pkg_vchan
+<client/*.ml{,i,y}>: pkg_vchan.lwt
+<client/*.ml{,i,y}>: pkg_xen-evtchn
+<client/*.ml{,i,y}>: pkg_xen-evtchn.unix
+<client/*.ml{,i,y}>: pkg_xen-evtchn.unix.activations
+<client/*.ml{,i,y}>: pkg_xen-gnt
+<client/*.ml{,i,y}>: pkg_xen-gnt.unix
+<client/*.ml{,i,y}>: pkg_xenstore
+<client/*.ml{,i,y}>: pkg_xenstore.client
+<client/*.ml{,i,y}>: pkg_xenstore_transport
+<client/*.ml{,i,y}>: pkg_xenstore_transport.lwt
+<client/*.ml{,i,y}>: use_testvmlib
 # OASIS_STOP
 true: annot
 <*/*>: syntax_camlp4o
