@@ -1,3 +1,9 @@
+0.4 (4-Apr-2015)
+- Update to cohttp 0.15.2
+- Add opam file
+- Modernize travis configuration
+- Update to vchan 2.0.0
+
 0.3 (16-Jul-2014)
 - Don't install the CLI by default
 

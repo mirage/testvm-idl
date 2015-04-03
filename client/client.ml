@@ -17,16 +17,14 @@
 open Cmdliner
 
 module Xs = Xs_client_lwt.Client(Xs_transport_lwt_unix_client)
-module V = struct
-  include Vchan.Make(Unix_activations)(Xs)
-  type 'a io = 'a Lwt.t
-  type buffer = Cstruct.t
-  type flow = t
-end
+module V = Vchan.Endpoint.Make(Events_lwt_unix)(Memory_lwt_unix)(Vchan.Xenstore.Make(Xs))
 module Vchan_http = Vchan_http.Make(V)
 module RpcM = Vchan_http.RpcM
 module Client = Test_interface.ClientM(RpcM)
 
+let port = match Vchan.Port.of_string "testvm" with
+| `Ok x -> x
+| `Error x -> failwith x
 
 let vif_list () =
   lwt vifs = Client.Vif.list () in
@@ -53,7 +51,7 @@ let block_write_sector vbdid offset filename =
   let channel = Lwt_io.of_fd ~mode:Lwt_io.input fd in
   lwt str = Lwt_io.read channel in
   Printf.fprintf stderr "Read %d bytes\n%!" (String.length str);
-  let str = Cohttp.Base64.encode str in
+  let str = B64.encode str in
   Client.Vbd.write_sector vbdid offset str
 
 let block_read_sector vbdid offset filename =
@@ -61,7 +59,7 @@ let block_read_sector vbdid offset filename =
   Printf.fprintf stderr "done\n%!";
   lwt fd = Lwt_unix.openfile filename [Unix.O_RDWR] 0o644 in
   let channel = Lwt_io.of_fd ~mode:Lwt_io.output fd in
-  let sector = Cohttp.Base64.decode sector in
+  let sector = B64.decode sector in
   lwt () = Lwt_io.write channel sector in
   Lwt_io.close channel
 
@@ -165,7 +163,7 @@ let debug_cmd =
       `Ok ((fun () -> 
           let Some vch = !(RpcM.vch) in
           Vchan_http.close vch;
-          lwt client = V.client ~evtchn_h:(Eventchn.init ()) ~domid ~xs_path:(Printf.sprintf "/local/domain/%d/data/vchan" domid) in
+          lwt client = V.client ~domid ~port () in
           Lwt.return ()), domid)) $ domid_arg)),
   Term.info "debug" ~doc ~man
 
@@ -217,8 +215,7 @@ let _ =
                              ] with `Ok x -> x | _ -> exit 1) in
 
   let thread = 
-    let evtchn_h = Eventchn.init () in
-    lwt flow = V.client ~evtchn_h ~domid ~xs_path:(Printf.sprintf "/local/domain/%d/data/vchan" domid) in
+    lwt flow = V.client ~domid ~port () in
     RpcM.vch := Some (Vchan_http.openflow flow);
     fn ()
   in
