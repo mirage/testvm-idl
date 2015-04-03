@@ -63,6 +63,7 @@ struct
 
   type ic = channel
   type oc = channel
+  type conn = unit
 
   let iter fn x = Lwt_list.iter_s fn x
 
@@ -111,7 +112,7 @@ module Make ( V : V1_LWT.FLOW ) = struct
       ] in
 
     let http_req = Cohttp.Request.make ~meth:`POST ~version:`HTTP_1_1 ~headers uri in
-    lwt _ = Request.write (fun t vch -> Request.write_body t vch req) http_req vch in
+    lwt _ = Request.write (fun writer -> Request.write_body writer req) http_req vch in
     lwt response = Response.read vch in
     match response with
     | `Eof -> Lwt.fail (Failure (Printf.sprintf "Failed to read HTTP response"))
@@ -119,8 +120,9 @@ module Make ( V : V1_LWT.FLOW ) = struct
     | `Ok t ->
       begin match Cohttp.Response.status t with
         | `OK ->
+          let reader = Response.make_body_reader t vch in
           lwt body = 
-            lwt chunk = Response.read_body_chunk t vch in
+            lwt chunk = Response.read_body_chunk reader in
             match chunk with 
             | Cohttp.Transfer.Chunk body
             | Cohttp.Transfer.Final_chunk body -> Lwt.return body
@@ -165,22 +167,22 @@ module Make ( V : V1_LWT.FLOW ) = struct
               lwt rpc_response = process ctx rpc_call in
               Printf.printf "   %s" (Rpc.string_of_response rpc_response);
               let response_txt = string_of_response rpc_response in
-              let content_length = String.length response_txt in
+              let content_length = Int64.of_int (String.length response_txt) in
               let headers = Cohttp.Header.of_list [
                   "user-agent", "vchan";
-                  "content-length", string_of_int content_length;
+                  "content-length", Int64.to_string content_length;
                 ] in
               let response = Cohttp.Response.make ~version:`HTTP_1_1 ~status:`OK ~headers ~encoding:(Cohttp.Transfer.Fixed content_length) () in
-              Response.write (fun t vch -> Response.write_body t vch response_txt) response vch
+              Response.write (fun writer -> Response.write_body writer response_txt) response vch
           end
         | _, _ ->
-          let content_length = 0 in
+          let content_length = 0L in
           let headers = Cohttp.Header.of_list [
               "user-agent", "vchan";
-              "content-length", string_of_int content_length;
+              "content-length", Int64.to_string content_length;
             ] in
           let response = Cohttp.Response.make ~version:`HTTP_1_1 ~status:`Not_found ~headers ~encoding:(Cohttp.Transfer.Fixed content_length) () in
-          Response.write (fun t vch -> Lwt.return ()) response vch
+          Response.write (fun writer -> Lwt.return ()) response vch
       end
 
 end

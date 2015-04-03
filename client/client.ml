@@ -53,7 +53,7 @@ let block_write_sector vbdid offset filename =
   let channel = Lwt_io.of_fd ~mode:Lwt_io.input fd in
   lwt str = Lwt_io.read channel in
   Printf.fprintf stderr "Read %d bytes\n%!" (String.length str);
-  let str = Cohttp.Base64.encode str in
+  let str = B64.encode str in
   Client.Vbd.write_sector vbdid offset str
 
 let block_read_sector vbdid offset filename =
@@ -61,7 +61,7 @@ let block_read_sector vbdid offset filename =
   Printf.fprintf stderr "done\n%!";
   lwt fd = Lwt_unix.openfile filename [Unix.O_RDWR] 0o644 in
   let channel = Lwt_io.of_fd ~mode:Lwt_io.output fd in
-  let sector = Cohttp.Base64.decode sector in
+  let sector = B64.decode sector in
   lwt () = Lwt_io.write channel sector in
   Lwt_io.close channel
 
